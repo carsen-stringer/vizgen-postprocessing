@@ -26,6 +26,8 @@ class CellposeSegParameters:
     flow_threshold: float
     mask_threshold: float
     minimum_mask_size: int
+    sharpen_radius: float
+    take_max: bool
 
 
 def cellpose_polygons_masks(images: ImageSet, segmentation_properties: Dict,
@@ -54,21 +56,30 @@ def cellpose_polygons_masks(images: ImageSet, segmentation_properties: Dict,
         model = models.Cellpose(gpu=False, model_type=properties.model, net_avg=False)
 
     to_segment_z = list(set(range(image.shape[0])).difference(empty_z_levels))
+    if parameters.take_max:
+        image_seg = image[to_segment_z,...].max(axis=0)
+    else:
+        image_seg = image[to_segment_z,...]
     mask = model.eval(
-        image[to_segment_z, ...],
-        z_axis=0,
-        channel_axis=len(image.shape) - 1,
+        image_seg,
+        z_axis=0 if not parameters.take_max else None,
+        channel_axis=len(image_seg.shape) - 1,
         diameter=parameters.diameter,
         flow_threshold=parameters.flow_threshold,
-        mask_threshold=parameters.mask_threshold,
+        cellprob_threshold=parameters.mask_threshold,
+        normalize={"normalize":True, 
+                   "sharpen_radius":parameters.sharpen_radius},
         resample=False,
         min_size=parameters.minimum_mask_size,
         tile=True,
         do_3D=(properties.model_dimensions == '3D')
     )[0]
-    mask = mask.reshape((len(to_segment_z),) + image.shape[1:-1])
-    for i in empty_z_levels:
-        mask = np.insert(mask, i, np.zeros(image.shape[1:-1]), axis=0)
+    if not take_max:
+        mask = mask.reshape((len(to_segment_z),) + image.shape[1:-1])
+        for i in empty_z_levels:
+            mask = np.insert(mask, i, np.zeros(image.shape[1:-1]), axis=0)
+    else:
+        mask = np.repeat(mask[np.newaxis,...], image.shape[0], axis=0)
     return mask
 
 
