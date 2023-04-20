@@ -74,7 +74,7 @@ def cellpose_polygons_masks(images: ImageSet, segmentation_properties: Dict,
         tile=True,
         do_3D=(properties.model_dimensions == '3D')
     )[0]
-    if not take_max:
+    if not parameters.take_max:
         mask = mask.reshape((len(to_segment_z),) + image.shape[1:-1])
         for i in empty_z_levels:
             mask = np.insert(mask, i, np.zeros(image.shape[1:-1]), axis=0)
