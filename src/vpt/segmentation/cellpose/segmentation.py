@@ -75,6 +75,9 @@ def cellpose_polygons_masks(images: ImageSet, segmentation_properties: Dict,
         tile=True,
         do_3D=(properties.model_dimensions == '3D')
     )[0]
+    if parameters.dilation > 0.:
+        from cellpose.utils import dilate_masks
+        mask = dilate_masks(mask.astype(int), int(parameters.dilation))
     if not parameters.take_max:
         mask = mask.reshape((len(to_segment_z),) + image.shape[1:-1])
         for i in empty_z_levels:
