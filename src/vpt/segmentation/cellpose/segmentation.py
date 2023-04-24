@@ -25,6 +25,7 @@ class CellposeSegParameters:
     diameter: int
     flow_threshold: float
     mask_threshold: float
+    dilation: float
     minimum_mask_size: int
     sharpen_radius: float
     take_max: bool
